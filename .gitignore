@@ -130,3 +130,6 @@ dmypy.json
 
 # experiments logs
 logs
+
+# vscode config
+.vscode/

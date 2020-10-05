@@ -4,11 +4,14 @@ import torch.nn.functional as F
 from .common import conv2d_size_out, BaseAgent
 
 class DQN(BaseAgent):
-    """[summary]
+    """Agent class for DQN algorithm (see https://arxiv.org/abs/1312.5602).
 
     Args:
-        BaseAgent ([type]): [description]
-    """    
+        h (int): Height of input image.
+        w (int): Width of input image.
+        outputs (int): Output model size. 
+    """ 
+
     def __init__(self, h, w, outputs):
         super(DQN, self).__init__(h, w, outputs)
         self.conv1 = nn.Conv2d(3, 16, kernel_size=5, stride=2)

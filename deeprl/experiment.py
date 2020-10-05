@@ -17,19 +17,26 @@ import tqdm
 from .agents.common import Transition
 
 class LearningParams(object):
-    """[summary]
+    """Wrapper for model parameters to help code readability.
 
     Args:
-        object ([type]): [description]
+        kwargs (dict): Parameters dictionary.
     """    
     def __init__(self, kwargs):
         self.__dict__.update(kwargs)
 
 class Experiment(object):
-    """[summary]
+    """Experiment class.
+
+    An Experiment is a full session of exploration of an Agent in an Environment.
 
     Args:
-        object ([type]): [description]
+        env ([gym.envs.atari.atari_env.AtariEnv, gym.wrappers.monitor.Monitor].): Gym environment instance.
+        model_class (): 
+        params (LearningParams): Collection of training parameters.
+        device (torch.device): Device operating computations.
+        screen_transform (torchvision.transforms.transforms.Compose): Preprocessing transforms of input images.
+        optimizer_class ():
     """
     def __init__(self, 
                  env,
@@ -151,40 +158,24 @@ class Experiment(object):
         returns = []
         episode_lenghts = []
         mean_losses = []
-
-        # _, ax = plt.subplots(1,2)
-        # ax[1].set_title(f'episode return')
-        # ax[0].axis('off')
         
         for episode_idx in tqdm.tqdm(range(num_episodes)):
             # Initialize the environment and state
-            # ax[1].set_xlabel(f'episode')
-            # ax[0].set_title(f'episode: {episode_idx}')
-            # cum_rewards = []
-
-            episode_frames = []
-            losses = []
-            cum_reward = 0
-            episode_lenght = 0
             self.env.reset()
             last_screen, _ = self.get_screen()
             current_screen, _ = self.get_screen()
             state = current_screen - last_screen
 
             for _ in count():
-                episode_lenght += 1
                 # Select and perform an action
                 action = self.select_action(state)
                 _, reward, done, _ = self.env.step(action.item())
-                cum_reward += reward
                 reward = torch.tensor([reward], device=self.device)
 
                 # Observe new state
                 last_screen = current_screen
                 current_screen, original_screen = self.get_screen()
-                # ax[0].imshow(original_screen)
-                # plt.pause(0.00000001)
-                episode_frames.append(original_screen)
+
                 if not done:
                     next_state = current_screen - last_screen
                 else:
@@ -198,43 +189,12 @@ class Experiment(object):
 
                 # Perform one step of the optimization (on the target network)
                 loss_val = self.optimize_model()
-                #losses.append(loss_val)
+
                 if done:
+
                     break
             # Update the target network, copying all weights and biases in DQN
             if episode_idx % self.params.TARGET_UPDATE == 0:
                 self.target_net.load_state_dict(self.policy_net.state_dict())
 
-            def generate_video(images_list): 
-                #image_folder = '.' # make sure to use your folder 
-                video_name = str(Path(output_video_folder) / f'./ep_{episode_idx}_l={int(episode_lenght)}.avi')
-
-                # setting the frame width, height width 
-                # the width, height of first image 
-                height, width, _ = images_list[0].shape   
-            
-                fourcc = cv2.VideoWriter_fourcc(*'X264')
-                video = cv2.VideoWriter(video_name, fourcc, 40, (height, width))  
-            
-                # Appending the images to the video one by one 
-                for image in images_list:  
-                    video.write((image).astype(np.uint8))  
-                    
-                # Deallocating memories taken for window creation 
-                cv2.destroyAllWindows()  
-                video.release()  # releasing the video generated 
-
-            if save_video:
-                generate_video(episode_frames) 
-            
-            #losses = [ l.cpu().data.numpy() + 0 for l in losses ]
-            
-            #mean_losses.append(np.mean(losses))
-            returns.append(cum_reward)
-            episode_lenghts.append(episode_lenght)
-
-            # ax[1].clear()
-            # ax[1].set_title(f'episode return')
-            # ax[1].plot(returns)
-
-        return returns, episode_lenghts
+        self.env.close()

@@ -1,0 +1,8 @@
+torch
+torchvision
+gym
+'gym[atari]'
+matplotlib
+tqdm
+tk
+opencv-python

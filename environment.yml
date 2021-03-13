@@ -3,16 +3,9 @@ channels:
   - pytorch
   - conda-forge
 dependencies:
-  - python>=3.6
+  - cudatoolkit=11.1 
+  - python==3.8
   - pip
-pip:
-  - pytorch
-  - torchvision
-  - cudatoolkit=10.2
-  - ipykernel
-  - nb_conda
-  - gym
-  - gym-atari
-  - matplotlib
-  - tqdm
-  - tk
+  - pip:
+    - -r file:requirements.txt
+    - -r file:requirements_dev.txt
